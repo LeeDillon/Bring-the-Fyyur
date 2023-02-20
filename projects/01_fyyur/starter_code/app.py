@@ -46,7 +46,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.String(120), nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
-    # shows = db.relationship('shows', backref='Venue', lazy=True)
+    shows = db.relationship('Show', backref='Venue', lazy=True)
 
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
@@ -65,20 +65,40 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.String(120), nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
-    # shows = db.relationship('shows', backref='Artist', lazy=True)
+    shows = db.relationship('Show', backref='Artist', lazy=True)
+
+    def num_upcoming_shows(self):
+      return self.query.join(Show).filter_by(artist_id=self.id).filter(
+      Show.start_time > datetime.now()).count()
+
+    def num_past_shows(self):
+      return self.query.join(Show).filter_by(artist_id=self.id).filter(
+      Show.start_time < datetime.now()).count()
+
+    def past_shows(self):
+      return Show.get_past_by_artist(self.id)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
-shows = db.Table('shows',
-    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'), primary_key=True),
-    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
-    db.Column('start_time', db.DateTime(timezone=True)),
-)    
-# db.Column('venue_name', db.String, db.ForeignKey('Venue.name')),    
-# db.Column('artist_name', db.String, db.ForeignKey('Artist.name')),
-# db.Column('artist_image_link', db.String, db.ForeignKey('Artist.image_link'))
+class Show(db.Model):
+    __tablename__ = 'shows'
+
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
+    start_time = db.Column(db.DateTime(timezone=True))
+
+    @classmethod
+    def get_past_by_venue(cls, venue_id):    
+      shows = cls.query.filter_by(venue_id=venue_id).filter(cls.start_time < datetime.now()).all()
+      return [show.show_details for show in shows]
+
+    @classmethod
+    def get_past_by_artist(cls, artist_id):
+      shows = cls.query.filter_by(artist_id=artist_id).filter(cls.start_time < datetime.now()).all()
+      return [show.show_details for show in shows]
 
 #----------------------------------------------------------------------------#
 # Filters.
