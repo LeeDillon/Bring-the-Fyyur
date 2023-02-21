@@ -48,6 +48,9 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     shows = db.relationship('Show', backref='Venue', lazy=True)
 
+    # def past_shows(self):
+    #   return Show.get_past_by_venue(self.id)
+
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -67,16 +70,16 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     shows = db.relationship('Show', backref='Artist', lazy=True)
 
-    def num_upcoming_shows(self):
+    def upcoming_shows_count(self):
       return self.query.join(Show).filter_by(artist_id=self.id).filter(
       Show.start_time > datetime.now()).count()
 
-    def num_past_shows(self):
+    def past_shows_count(self):
       return self.query.join(Show).filter_by(artist_id=self.id).filter(
       Show.start_time < datetime.now()).count()
 
-    def past_shows(self):
-      return Show.get_past_by_artist(self.id)
+    # def past_shows(self):
+    #   return Show.get_past_by_artist(self.id)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -85,27 +88,34 @@ class Artist(db.Model):
 class Show(db.Model):
     __tablename__ = 'shows'
 
-    id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), primary_key=True)
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
     start_time = db.Column(db.DateTime(timezone=True))
 
-    @classmethod
-    def get_past_by_venue(cls, venue_id):    
-      shows = cls.query.filter_by(venue_id=venue_id).filter(cls.start_time < datetime.now()).all()
-      return [show.show_details for show in shows]
+    def __repr__(self):
+      return '<Show {} {}>'.format(self.artist_id, self.venue_id)
 
-    @classmethod
-    def get_past_by_artist(cls, artist_id):
-      shows = cls.query.filter_by(artist_id=artist_id).filter(cls.start_time < datetime.now()).all()
-      return [show.show_details for show in shows]
+    # @classmethod
+    # def get_past_by_venue(cls, venue_id):    
+    #   shows = cls.query.filter_by(venue_id=venue_id).filter(cls.start_time < datetime.now()).all()
+    #   return [show.show_details for show in shows]
+
+    # @classmethod
+    # def get_past_by_artist(cls, artist_id):
+    #   shows = cls.query.filter_by(artist_id=artist_id).filter(cls.start_time < datetime.now()).all()
+    #   return [show.show_details for show in shows]
 
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
+  # date = dateutil.parser.parse(value)
+  if isinstance(value, str):
+      date = dateutil.parser.parse(value)
+  else:
+      date = value
   if format == 'full':
       format="EEEE MMMM, d, y 'at' h:mma"
   elif format == 'medium':
@@ -167,13 +177,7 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
     venue = Venue.query.get(venue_id)
-    return render_template('pages/show_venue.html', venue=venue)
-  #   return render_template('pages/show_venue.html', 
-  #   venue=Venue.query.get(venue_id),
-  #   active_list=TodoList.query.get(list_id),
-  #   todos=Todo.query.filter_by(list_id=list_id).order_by('id').all()) 
-  # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
-  
+    return render_template('pages/show_venue.html', venue=venue)  
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -390,43 +394,45 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  data=[{
-    "venue_id": 1,
-    "venue_name": "The Musical Hop",
-    "artist_id": 4,
-    "artist_name": "Guns N Petals",
-    "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    "start_time": "2019-05-21T21:30:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 5,
-    "artist_name": "Matt Quevedo",
-    "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    "start_time": "2019-06-15T23:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-01T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-08T20:00:00.000Z"
-  }, {
-    "venue_id": 3,
-    "venue_name": "Park Square Live Music & Coffee",
-    "artist_id": 6,
-    "artist_name": "The Wild Sax Band",
-    "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "start_time": "2035-04-15T20:00:00.000Z"
-  }]
+  data = Show.query.join(Venue,Artist).filter_by()
   return render_template('pages/shows.html', shows=data)
+  # data=[{
+  #   "venue_id": 1,
+  #   "venue_name": "The Musical Hop",
+  #   "artist_id": 4,
+  #   "artist_name": "Guns N Petals",
+  #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+  #   "start_time": "2019-05-21T21:30:00.000Z"
+  # }, {
+  #   "venue_id": 3,
+  #   "venue_name": "Park Square Live Music & Coffee",
+  #   "artist_id": 5,
+  #   "artist_name": "Matt Quevedo",
+  #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
+  #   "start_time": "2019-06-15T23:00:00.000Z"
+  # }, {
+  #   "venue_id": 3,
+  #   "venue_name": "Park Square Live Music & Coffee",
+  #   "artist_id": 6,
+  #   "artist_name": "The Wild Sax Band",
+  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  #   "start_time": "2035-04-01T20:00:00.000Z"
+  # }, {
+  #   "venue_id": 3,
+  #   "venue_name": "Park Square Live Music & Coffee",
+  #   "artist_id": 6,
+  #   "artist_name": "The Wild Sax Band",
+  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  #   "start_time": "2035-04-08T20:00:00.000Z"
+  # }, {
+  #   "venue_id": 3,
+  #   "venue_name": "Park Square Live Music & Coffee",
+  #   "artist_id": 6,
+  #   "artist_name": "The Wild Sax Band",
+  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+  #   "start_time": "2035-04-15T20:00:00.000Z"
+  # }]
+
 
 @app.route('/shows/create')
 def create_shows():
@@ -438,13 +444,32 @@ def create_shows():
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-
+  error = False
+  try:
+    artist_id = request.form['artist_id']
+    venue_id = request.form['venue_id']
+    start_time = request.form['start_time']
+    show = Show(artist_id=artist_id,venue_id=venue_id,start_time=start_time)
+    db.session.add(show)
+    db.session.commit()
+  except():
+    db.session.rollback()
+    error = True
+    print(sys.exc_info)
+  finally:
+    db.session.close()
+  if error:
+    flash('An error occurred. Show could not be listed.')
+    abort(500)
+  else:
+    flash('Show was successfully listed!')
+    return render_template('pages/home.html')
   # on successful db insert, flash success
-  flash('Show was successfully listed!')
+  
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Show could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  # return render_template('pages/home.html')
 
 @app.errorhandler(404)
 def not_found_error(error):
