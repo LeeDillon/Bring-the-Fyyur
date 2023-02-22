@@ -70,13 +70,13 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     shows = db.relationship('Show', backref='Artist', lazy=True)
 
-    def upcoming_shows_count(self):
-      return self.query.join(Show).filter_by(artist_id=self.id).filter(
-      Show.start_time > datetime.now()).count()
+    # def upcoming_shows_count(self):
+    #   return self.query.join(Show).filter_by(artist_id=self.id).filter(
+    #   Show.start_time > datetime.now()).count()
 
-    def past_shows_count(self):
-      return self.query.join(Show).filter_by(artist_id=self.id).filter(
-      Show.start_time < datetime.now()).count()
+    # def past_shows_count(self):
+    #   return self.query.join(Show).filter_by(artist_id=self.id).filter(
+    #   Show.start_time < datetime.now()).count()
 
     # def past_shows(self):
     #   return Show.get_past_by_artist(self.id)
@@ -93,8 +93,8 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
     start_time = db.Column(db.DateTime(timezone=True))
 
-    def __repr__(self):
-      return '<Show {} {}>'.format(self.artist_id, self.venue_id)
+    # def __repr__(self):
+    #   return '<Show {} {}>'.format(self.artist_id, self.venue_id)
 
     # @classmethod
     # def get_past_by_venue(cls, venue_id):    
@@ -206,7 +206,7 @@ def create_venue_submission():
     venue = Venue(name=name,genres=genres,address=address,city=city,state=state,phone=phone,website=website,facebook_link=facebook_link,seeking_talent=seeking_talent,seeking_description=seeking_description,image_link=image_link)
     db.session.add(venue)
     db.session.commit()
-  except():
+  except:
     db.session.rollback()
     error = True
     print(sys.exc_info)
@@ -234,7 +234,7 @@ def delete_venue(venue_id):
     thisVenue = Venue.query.get(venue_id)
     db.session.delete(thisVenue)
     db.session.commit()
-  except():
+  except:
     db.session.rollback()
     error = True
     print(sys.exc_info)
@@ -365,7 +365,7 @@ def create_artist_submission():
     artist = Artist(name=name,genres=genres,city=city,state=state,phone=phone,website=website,facebook_link=facebook_link,seeking_venue=seeking_venue,seeking_description=seeking_description,image_link=image_link)
     db.session.add(artist)
     db.session.commit()
-  except():
+  except:
     db.session.rollback()
     error = True
     print(sys.exc_info)
@@ -394,45 +394,18 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  data = Show.query.join(Venue,Artist).filter_by()
+  showsInfo = db.session.query(Show).join(Artist).join(Venue).all()
+  data = []
+  for show in showsInfo:
+    data.append({
+      "venue_id": show.venue_id,
+      "venue_name": show.Venue.name,
+      "artist_id": show.artist_id,
+      "artist_name": show.Artist.name, 
+      "artist_image_link": show.Artist.image_link,
+      "start_time": show.start_time
+    })
   return render_template('pages/shows.html', shows=data)
-  # data=[{
-  #   "venue_id": 1,
-  #   "venue_name": "The Musical Hop",
-  #   "artist_id": 4,
-  #   "artist_name": "Guns N Petals",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-  #   "start_time": "2019-05-21T21:30:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 5,
-  #   "artist_name": "Matt Quevedo",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-  #   "start_time": "2019-06-15T23:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-01T20:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-08T20:00:00.000Z"
-  # }, {
-  #   "venue_id": 3,
-  #   "venue_name": "Park Square Live Music & Coffee",
-  #   "artist_id": 6,
-  #   "artist_name": "The Wild Sax Band",
-  #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-  #   "start_time": "2035-04-15T20:00:00.000Z"
-  # }]
-
 
 @app.route('/shows/create')
 def create_shows():
@@ -452,7 +425,7 @@ def create_show_submission():
     show = Show(artist_id=artist_id,venue_id=venue_id,start_time=start_time)
     db.session.add(show)
     db.session.commit()
-  except():
+  except:
     db.session.rollback()
     error = True
     print(sys.exc_info)
