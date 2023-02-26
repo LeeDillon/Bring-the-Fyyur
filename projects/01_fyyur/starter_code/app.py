@@ -185,7 +185,7 @@ def create_venue_submission():
             city=form.city.data,
             state=form.state.data,
             phone=form.phone.data,
-            website=form.website.data,
+            website=form.website_link.data,
             facebook_link=form.facebook_link.data,
             seeking_talent=form.seeking_talent.data,
             seeking_description=form.seeking_description.data,
@@ -444,7 +444,7 @@ def create_artist_submission():
             city=form.city.data,
             state=form.state.data,
             phone=form.phone.data,
-            website=form.website.data,
+            website=form.website_link.data,
             facebook_link=form.facebook_link.data,
             seeking_venue=form.seeking_venue.data,
             seeking_description=form.seeking_description.data,
@@ -522,10 +522,10 @@ def shows():
   for show in showsInfo:
     data.append({
       "venue_id": show.venue_id,
-      "venue_name": show.Venue.name,
+      "venue_name": show.venue.name,
       "artist_id": show.artist_id,
-      "artist_name": show.Artist.name, 
-      "artist_image_link": show.Artist.image_link,
+      "artist_name": show.artist.name, 
+      "artist_image_link": show.artist.image_link,
       "start_time": show.start_time
     })
   return render_template('pages/shows.html', shows=data)
